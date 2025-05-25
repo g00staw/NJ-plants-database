@@ -1,0 +1,175 @@
+1. Rośliny kwitnące w określonym sezonie z ich wysokościami
+
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?plant ?commonName ?minHeight ?maxHeight ?startMonth ?endMonth
+WHERE {
+    ?plant a :Plant ;
+           :has-common-name ?commonName ;
+           :has-min-height ?minHeight ;
+           :has-max-height ?maxHeight ;
+           :has-start-bloom-period ?startMonth ;
+           :has-end-bloom-period ?endMonth .
+    FILTER(?startMonth = :May || ?startMonth = :June || ?startMonth = :July)
+}
+ORDER BY ?minHeight
+
+2. Gatunki o najszerszym zakresie warunków świetlnych
+
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?plant ?commonName (COUNT(?lightCondition) AS ?lightVariety)
+WHERE {
+    ?plant a :Plant ;
+           :has-common-name ?commonName ;
+           :has-light ?lightCondition .
+}
+GROUP BY ?plant ?commonName
+HAVING (COUNT(?lightCondition) >= 2)
+ORDER BY DESC(?lightVariety)
+
+3. Rośliny z długim okresem kwitnienia (więcej niż 3 miesiące)
+
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?plant ?commonName ?startMonth ?endMonth ?family
+WHERE {
+    ?plant a :Plant ;
+           :has-common-name ?commonName ;
+           :has-start-bloom-period ?startMonth ;
+           :has-end-bloom-period ?endMonth ;
+           :has-family ?family .
+    
+    # Mapowanie miesięcy na liczby dla obliczeń
+    VALUES (?startMonth ?startNum) {
+        (:January 1) (:February 2) (:March 3) (:April 4) (:May 5) (:June 6)
+        (:July 7) (:August 8) (:September 9) (:October 10) (:November 11) (:December 12)
+    }
+    VALUES (?endMonth ?endNum) {
+        (:January 1) (:February 2) (:March 3) (:April 4) (:May 5) (:June 6)
+        (:July 7) (:August 8) (:September 9) (:October 10) (:November 11) (:December 12)
+    }
+    
+    FILTER(?endNum - ?startNum >= 3)
+}
+
+4. Analiza różnorodności kolorów kwiatów w rodzinach botanicznych
+
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?family ?color (COUNT(?plant) AS ?plantCount)
+WHERE {
+    ?plant a :Plant ;
+           :has-family ?family ;
+           :has-color ?color .
+    FILTER(?color != :NA-Color)
+}
+GROUP BY ?family ?color
+ORDER BY ?family ?color
+
+5. Rośliny odpowiednie dla suchych, słonecznych miejsc z niskim wzrostem
+
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?plant ?commonName ?maxHeight ?habit ?notes
+WHERE {
+    ?plant a :Plant ;
+           :has-common-name ?commonName ;
+           :has-max-height ?maxHeight ;
+           :has-habit ?habit ;
+           :has-soil-moisture :Dry ;
+           :has-light ?light ;
+           :has-notes ?notes .
+    
+    FILTER(?light = :Full-Sun || ?light = :Sun)
+    FILTER(?maxHeight <= 3.0)
+}
+ORDER BY ?maxHeight
+
+6. Rośliny z rodziny Betulaceae - porównanie wysokości i okresów kwitnienia
+
+PREFIX ont: <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?plant ?commonName ?minHeight ?maxHeight ?startMonth ?endMonth ?duration
+WHERE {
+    ?plant a ont:Plant ;
+           ont:has-common-name ?commonName ;
+           ont:has-family ont:Betulaceae ;
+           ont:has-min-height ?minHeight ;
+           ont:has-max-height ?maxHeight ;
+           ont:has-start-bloom-period ?startMonth ;
+           ont:has-end-bloom-period ?endMonth ;
+           ont:has-duration ?duration .
+}
+ORDER BY ?maxHeight
+
+7. Gatunki atrakcyjne dla motyli (z rodziny Apocynaceae)
+
+PREFIX ont: <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?plant ?commonName ?color ?bloomStart ?bloomEnd ?notes
+WHERE {
+    ?plant a ont:Plant ;
+           ont:has-common-name ?commonName ;
+           ont:has-family ont:Apocynaceae ;
+           ont:has-color ?color ;
+           ont:has-start-bloom-period ?bloomStart ;
+           ont:has-end-bloom-period ?bloomEnd ;
+           ont:has-notes ?notes .
+}
+
+8. Rośliny wodolubne vs. suchomilne - analiza form życiowych
+
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?moisturePreference ?habit (COUNT(?plant) AS ?plantCount)
+WHERE {
+    ?plant a :Plant ;
+           :has-soil-moisture ?moisturePreference ;
+           :has-habit ?habit .
+    
+    FILTER(?moisturePreference = :Wet || ?moisturePreference = :Dry)
+}
+GROUP BY ?moisturePreference ?habit
+ORDER BY ?moisturePreference ?habit
+
+9. Rośliny o największej tolerancji środowiskowej (różne warunki światła i wilgotności)
+
+SELECT ?plant ?commonName 
+       (COUNT(DISTINCT ?light) AS ?lightTolerance) 
+       (COUNT(DISTINCT ?moisture) AS ?moistureTolerance)
+       ((?lightTolerance + ?moistureTolerance) AS ?totalTolerance)
+WHERE {
+    ?plant a :Plant ;
+           :has-common-name ?commonName ;
+           :has-light ?light ;
+           :has-soil-moisture ?moisture .
+}
+GROUP BY ?plant ?commonName
+HAVING (?lightTolerance > 1 && ?moistureTolerance > 1)
+
+10. Kompleksowe zapytanie o rośliny do konkretnego projektu krajobrazowego
+
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX : <http://www.semanticweb.org/konra/ontologies/2025/4/untitled-ontology-8#>
+
+SELECT ?plant ?commonName ?scientificName ?habit ?maxHeight ?color ?light ?moisture
+WHERE {
+    ?plant a :Plant ;
+           :has-common-name ?commonName ;
+           :has-scientific-name ?scientificName ;
+           :has-habit ?habit ;
+           :has-max-height ?maxHeight ;
+           :has-color ?color ;
+           :has-light ?light ;
+           :has-soil-moisture ?moisture .
+    
+    # Tylko warunki światła i wilgotności
+    FILTER(?light = :Part-Sun || ?light = :Part-Shade)
+    FILTER(?moisture = :Medium)
+}
+ORDER BY ?habit ?maxHeight
